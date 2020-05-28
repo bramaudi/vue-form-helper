@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Vue Form Helper</title>
+</head>
+<body>
+  <div id="app">
+    <b>Fullname</b>:
+    <div v-if="form.loading">proses ...</div>
+    <div v-else>
+      {{ form.firstname }} {{ form.lastname }}
+      <br>
+      {{ form.email }}
+    </div>
+    <hr>
+    <form @submit="handleSubmit">
+      Firstname: 
+      <input type="text" v-model="form.firstname">
+      <div v-if="errors.firstname.state" style="color: red">
+        {{ errors.firstname.message }}
+      </div>
+      <br>
+      Lastname: 
+      <input type="text" v-model="form.lastname">
+      <div v-if="errors.lastname.state" style="color: red">
+        {{ errors.lastname.message }}
+      </div>
+      <br>
+      Email: 
+      <!-- Dalam kasus nyata gunakan type="email" -->
+      <input type="text" v-model="form.email">
+      <div v-if="errors.email.state" style="color: red">
+        {{ errors.email.message }}
+      </div>
+      <br>
+      <button type="submit">Submit</button>
+      <div v-if="form.success" style="color: green">
+        {{ form.success }}
+      </div>
+    </form>
+  </div>
+  
+  <script type="module">
+    // import Vue runtime + es compiler
+    import Vue from 'https://cdn.jsdelivr.net/npm/vue@2.6.0/dist/vue.esm.browser.js'
+    // import form helper
+    import FormHelper from './helper/form.js'
+
+    // buat instance form helper dengan array data
+    const form = new FormHelper([
+      'firstname',
+      'lastname',
+      'email'
+    ])
+
+    new Vue({
+      el: '#app',
+      data: {
+        ...form.state()
+      },
+      mounted () {
+        // bind Vue instance kedalam helper
+        form.bind(this)
+
+        // berikan data awal saat komponen mounted
+        this.form.firstname = 'Brama'
+        this.form.lastname = 'Udi'
+        this.form.email = 'user@site.com'
+      },
+      methods: {
+        handleSubmit (e) {
+          e.preventDefault()
+          
+          // fungsi: reset data sebelum proses
+          form.submit()
+
+          // ambil field dari form dengan metode destruktif
+          const { firstname, lastname, email } = this.form
+
+          // lakukan validasi
+          if (firstname.length < 3) {
+            // berikan pesan errro
+            form.error('firstname', 'Nama depan min. 3')
+          }
+          if (firstname.length > 10) {
+            form.error('firstname', 'Nama depan max. 10')
+          }
+          if (lastname.length < 5) {
+            form.error('lastname', 'Nama belakang min. 5')
+          }
+          if (lastname.length > 10) {
+            form.error('lastname', 'Nama belakang max. 10')
+          }
+          // validator email
+          if (!form.validator.isEmail(email)) {
+            form.error('email', 'Alamat email tidak valid')
+          }
+
+          // jika tidak ada error alias sukses
+          if (form.noErrors()) {
+            // timeout untuk simulasi loading saat melakukan request
+            setTimeout(() => {
+              // ubah nilai / dalam kasus nyata ini adalah api request
+              this.form = { firstname, lastname, email }
+              // set notif sukses
+              // pramater kedua adalah opsi reset form
+              form.success('Data berhasil diubah ..!!', false)
+            }, 1000)
+          }
+        }
+      }
+    })
+  </script>
+</body>
+</html>
